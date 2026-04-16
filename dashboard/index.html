@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JARVIS Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #0f0f1a;
+      --surface-2: #141426;
+      --border: rgba(99,179,237,0.12);
+      --text: #e2e8f0;
+      --text-muted: #718096;
+      --text-faint: #4a5568;
+      --accent: #63b3ed;
+      --accent-glow: rgba(99,179,237,0.15);
+      --accent-2: #76e4f7;
+      --green: #68d391;
+      --orange: #f6ad55;
+      --red: #fc8181;
+      --purple: #b794f4;
+      --gold: #f6e05e;
+      --radius: 10px;
+      --font-mono: 'Geist Mono', monospace;
+      --font: 'Geist', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    /* Animated background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(99,179,237,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,179,237,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ---- LAYOUT ---- */
+    .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+    /* ---- SIDEBAR ---- */
+    .sidebar {
+      width: 220px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 24px 0;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      display: flex; flex-direction: column;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      padding: 0 20px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .sidebar-logo .logo-text {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 4px;
+      color: var(--accent);
+      text-shadow: 0 0 20px rgba(99,179,237,0.5);
+    }
+    .sidebar-logo .logo-sub {
+      font-size: 10px;
+      color: var(--text-faint);
+      letter-spacing: 2px;
+      margin-top: 2px;
+      text-transform: uppercase;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+      border-left: 2px solid transparent;
+      text-decoration: none;
+    }
+    .nav-item:hover { color: var(--text); background: var(--accent-glow); }
+    .nav-item.active {
+      color: var(--accent);
+      border-left-color: var(--accent);
+      background: var(--accent-glow);
+    }
+    .nav-icon { width: 16px; height: 16px; opacity: 0.8; }
+    .sidebar-status {
+      margin-top: auto;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .status-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ---- MAIN ---- */
+    .main {
+      margin-left: 220px;
+      flex: 1;
+      padding: 28px 32px;
+      overflow-y: auto;
+    }
+
+    /* ---- TOPBAR ---- */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .page-title span { color: var(--accent); }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .time-badge {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: var(--radius);
+    }
+    .btn {
+      padding: 8px 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--font);
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+    .btn-primary {
+      background: var(--accent);
+      color: #0a0a0f;
+      border-color: var(--accent);
+    }
+    .btn-primary:hover { background: var(--accent-2); border-color: var(--accent-2); color: #0a0a0f; }
+
+    /* ---- SECTIONS ---- */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ---- STAT CARDS ---- */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      transition: border-color 0.2s;
+    }
+    .stat-card:hover { border-color: var(--accent); }
+    .stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-faint);
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-family: var(--font-mono);
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+    /* ---- CARD ---- */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.5px;
+    }
+    .card-title .dot-accent {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+    }
+
+    /* ---- TWO COL GRID ---- */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ---- TASK LIST ---- */
+    .task-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .task-item:last-child { border-bottom: none; }
+    .task-check {
+      width: 16px; height: 16px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .task-check:hover { border-color: var(--accent); background: var(--accent-glow); }
+    .task-check.done { background: var(--green); border-color: var(--green); }
+    .task-check.done::after { content: '\2713'; font-size: 10px; color: #0a0a0f; }
+    .task-info { flex: 1; }
+    .task-title { font-size: 13px; color: var(--text); margin-bottom: 3px; }
+    .task-title.done { text-decoration: line-through; color: var(--text-faint); }
+    .task-meta { font-size: 11px; color: var(--text-muted); display: flex; gap: 8px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 7px;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .badge-high { background: rgba(252,129,129,0.15); color: var(--red); }
+    .badge-medium { background: rgba(246,173,85,0.15); color: var(--orange); }
+    .badge-low { background: rgba(104,211,145,0.15); color: var(--green); }
+
+    /* ---- ADD TASK ---- */
+    .add-task-row {
+      display: flex; gap: 8px; margin-top: 12px;
+    }
+    .input {
+      flex: 1;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: var(--font);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input:focus { border-color: var(--accent); }
+    .input::placeholder { color: var(--text-faint); }
+    select.input { cursor: pointer; }
+
+    /* ---- MEMORY VIEWER ---- */
+    .memory-item {
+      padding: 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+    .memory-item:hover { border-color: var(--accent); }
+    .memory-type {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: 5px;
+      font-family: var(--font-mono);
+    }
+    .memory-content { font-size: 13px; color: var(--text); line-height: 1.5; }
+    .memory-meta { font-size: 11px; color: var(--text-faint); margin-top: 5px; }
+    .importance-bar {
+      display: flex; gap: 3px; margin-top: 6px;
+    }
+    .imp-dot {
+      width: 8px; height: 4px;
+      border-radius: 2px;
+      background: var(--border);
+    }
+    .imp-dot.filled { background: var(--accent); }
+
+    /* ---- CONVERSATION ---- */
+    .conv-msg {
+      display: flex;
+      gap: 10px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .conv-msg:last-child { border-bottom: none; }
+    .conv-role {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      min-width: 60px;
+      padding-top: 2px;
+    }
+    .conv-role.user { color: var(--gold); }
+    .conv-role.jarvis { color: var(--accent); }
+    .conv-text { font-size: 13px; color: var(--text); line-height: 1.6; flex: 1; }
+    .conv-time { font-size: 10px; color: var(--text-faint); white-space: nowrap; padding-top: 3px; }
+
+    /* ---- FILE MEMORY ---- */
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+    .file-item:hover { border-color: var(--accent); }
+    .file-icon {
+      width: 36px; height: 36px;
+      background: var(--accent-glow);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .file-info { flex: 1; }
+    .file-name { font-size: 13px; font-weight: 500; color: var(--text); }
+    .file-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .file-remove {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-faint);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .file-remove:hover { border-color: var(--red); color: var(--red); }
+
+    /* ---- SEARCH ---- */
+    .search-bar {
+      display: flex; gap: 8px; margin-bottom: 16px;
+    }
+
+    /* ---- EMPTY ---- */
+    .empty {
+      text-align: center;
+      padding: 48px 16px;
+      color: var(--text-faint);
+    }
+    .empty-icon { font-size: 32px; margin-bottom: 12px; }
+    .empty-text { font-size: 13px; }
+
+    /* ---- SCROLLBAR ---- */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+
+    /* ---- TOAST ---- */
+    .toast-container {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      display: flex; flex-direction: column; gap: 8px;
+      z-index: 9999;
+    }
+    .toast {
+      background: var(--surface-2);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--text);
+      animation: slide-in 0.3s ease;
+      max-width: 320px;
+    }
+    @keyframes slide-in {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* ---- SETUP NOTICE ---- */
+    .setup-notice {
+      background: rgba(246,173,85,0.08);
+      border: 1px solid rgba(246,173,85,0.3);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      font-size: 12px;
+      color: var(--orange);
+      line-height: 1.6;
+    }
+    .setup-notice strong { color: var(--gold); }
+
+    /* ---- RESPONSIVE ---- */
+    @media (max-width: 700px) {
+      .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-text">JARVIS</div>
+      <div class="logo-sub">System Dashboard</div>
+    </div>
+    <a class="nav-item active" data-section="overview" onclick="showSection('overview',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Overview
+    </a>
+    <a class="nav-item" data-section="tasks" onclick="showSection('tasks',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Tasks
+    </a>
+    <a class="nav-item" data-section="memory" onclick="showSection('memory',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1010 10A10 10 0 0012 2z"/><path d="M12 8v4l3 3"/></svg>
+      Memory
+    </a>
+    <a class="nav-item" data-section="conversation" onclick="showSection('conversation',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Conversations
+    </a>
+    <a class="nav-item" data-section="files" onclick="showSection('files',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+      File Memory
+    </a>
+    <a class="nav-item" data-section="settings" onclick="showSection('settings',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Settings
+    </a>
+    <div class="sidebar-status">
+      <div class="status-dot"><div class="dot"></div> JARVIS Online</div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="page-title">JARVIS <span>Control</span></div>
+      <div class="topbar-right">
+        <div class="time-badge" id="clock">--:--:--</div>
+        <button class="btn" onclick="refreshAll()">Refresh</button>
+        <button class="btn btn-primary" onclick="connectToJarvis()">Connect to JARVIS</button>
+      </div>
+    </div>
+
+    <div class="setup-notice">
+      <strong>⚡ Setup:</strong> This dashboard connects to your local JARVIS server at <strong>http://localhost:8765</strong>.
+      Make sure JARVIS is running (<code>python server.py</code>) before clicking Connect.
+      All data is loaded live from JARVIS's SQLite database via the API.
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="section active" id="section-overview">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">Open Tasks</div>
+          <div class="stat-value" id="stat-tasks">--</div>
+          <div class="stat-sub">active items</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Memories</div>
+          <div class="stat-value" id="stat-memories">--</div>
+          <div class="stat-sub">stored facts</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">File Memory</div>
+          <div class="stat-value" id="stat-files">--</div>
+          <div class="stat-sub">stored files</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">High Priority</div>
+          <div class="stat-value" style="color:var(--red)" id="stat-high">--</div>
+          <div class="stat-sub">urgent tasks</div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title"><div class="dot-accent"></div> Recent Tasks</div>
+          <div id="overview-tasks"><div class="empty"><div class="empty-icon">✓</div><div class="empty-text">No tasks loaded</div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><div class="dot-accent"></div> Recent Memories</div>
+          <div id="overview-memories"><div class="empty"><div class="empty-icon">🧠</div><div class="empty-text">No memories loaded</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TASKS -->
+    <div class="section" id="section-tasks">
+      <div class="card">
+        <div class="card-title"><div class="dot-accent"></div> All Tasks</div>
+        <div class="search-bar">
+          <input class="input" id="task-search" placeholder="Search tasks..." oninput="filterTasks()">
+          <select class="input" id="task-filter" onchange="filterTasks()" style="max-width:130px">
+            <option value="all">All Priorities</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <div id="task-list"><div class="empty"><div class="empty-icon">✓</div><div class="empty-text">No tasks yet</div></div></div>
+        <div class="add-task-row">
+          <input class="input" id="new-task-title" placeholder="New task title...">
+          <select class="input" id="new-task-priority" style="max-width:110px">
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="low">Low</option>
+          </select>
+          <button class="btn btn-primary" onclick="addTask()">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMORY -->
+    <div class="section" id="section-memory">
+      <div class="card">
+        <div class="card-title"><div class="dot-accent"></div> Memory Bank</div>
+        <div class="search-bar">
+          <input class="input" id="memory-search" placeholder="Search memories..." oninput="filterMemories()">
+          <button class="btn" onclick="filterMemories()">Search</button>
+        </div>
+        <div id="memory-list"><div class="empty"><div class="empty-icon">🧠</div><div class="empty-text">No memories loaded</div></div></div>
+      </div>
+    </div>
+
+    <!-- CONVERSATIONS -->
+    <div class="section" id="section-conversation">
+      <div class="card">
+        <div class="card-title"><div class="dot-accent"></div> Conversation History</div>
+        <div id="conv-list"><div class="empty"><div class="empty-icon">💬</div><div class="empty-text">No conversation history available.<br>Conversations are stored in-session only.</div></div></div>
+      </div>
+    </div>
+
+    <!-- FILE MEMORY -->
+    <div class="section" id="section-files">
+      <div class="card">
+        <div class="card-title"><div class="dot-accent"></div> Files in Memory</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">
+          Tell JARVIS: <em>"Store this file in your memory"</em> or <em>"Remember this document"</em> to add files here.
+        </p>
+        <div id="file-list"><div class="empty"><div class="empty-icon">📁</div><div class="empty-text">No files stored in memory</div></div></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="section" id="section-settings">
+      <div class="card">
+        <div class="card-title"><div class="dot-accent"></div> Connection Settings</div>
+        <div style="display:flex;flex-direction:column;gap:12px;max-width:400px">
+          <div>
+            <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:6px">JARVIS Server URL</label>
+            <input class="input" id="server-url" value="http://localhost:8765" placeholder="http://localhost:8765">
+          </div>
+          <button class="btn btn-primary" onclick="saveSettings()">Save & Reconnect</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot-accent"></div> New Features Installed</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="file-item">
+            <div class="file-icon">📅</div>
+            <div class="file-info"><div class="file-name">google_calendar_sync.py</div><div class="file-meta">Cross-platform Google Calendar integration</div></div>
+            <span class="badge badge-low">NEW</span>
+          </div>
+          <div class="file-item">
+            <div class="file-icon">🎤</div>
+            <div class="file-info"><div class="file-name">wake_word.py</div><div class="file-meta">"Hey Jarvis" detection — no clicking needed</div></div>
+            <span class="badge badge-low">NEW</span>
+          </div>
+          <div class="file-item">
+            <div class="file-icon">☀️</div>
+            <div class="file-info"><div class="file-name">morning_briefing.py</div><div class="file-meta">Weather + news + calendar morning summary</div></div>
+            <span class="badge badge-low">NEW</span>
+          </div>
+          <div class="file-item">
+            <div class="file-icon">📧</div>
+            <div class="file-info"><div class="file-name">email_write.py</div><div class="file-meta">Opt-in email sending via SMTP</div></div>
+            <span class="badge badge-low">NEW</span>
+          </div>
+          <div class="file-item">
+            <div class="file-icon">📂</div>
+            <div class="file-info"><div class="file-name">file_manager.py</div><div class="file-meta">Create, move, rename, list files</div></div>
+            <span class="badge badge-low">NEW</span>
+          </div>
+          <div class="file-item">
+            <div class="file-icon">🧠</div>
+            <div class="file-info"><div class="file-name">file_memory.py</div><div class="file-meta">Store files in JARVIS memory as context</div></div>
+            <span class="badge badge-low">NEW</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+let JARVIS_URL = 'http://localhost:8765';
+let allTasks = [];
+let allMemories = [];
+
+// Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// Navigation
+function showSection(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  el.classList.add('active');
+}
+
+// Toast
+function toast(msg, duration = 3000) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(() => t.remove(), duration);
+}
+
+// Settings
+function saveSettings() {
+  JARVIS_URL = document.getElementById('server-url').value.trim().replace(/\/$/,'');
+  toast('Settings saved. Reconnecting...');
+  refreshAll();
+}
+
+// Connect
+function connectToJarvis() {
+  toast('Connecting to JARVIS at ' + JARVIS_URL + '...');
+  refreshAll();
+}
+
+// ---- DATA LOADING ----
+async function loadTasks() {
+  try {
+    const r = await fetch(JARVIS_URL + '/tasks');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    allTasks = data.tasks || data || [];
+    renderTasks(allTasks);
+    renderOverviewTasks(allTasks);
+    document.getElementById('stat-tasks').textContent = allTasks.filter(t => t.status === 'open' || t.status === 'in_progress').length;
+    document.getElementById('stat-high').textContent = allTasks.filter(t => t.priority === 'high' && (t.status === 'open' || t.status === 'in_progress')).length;
+  } catch(e) {
+    console.warn('Tasks not loaded:', e.message);
+    document.getElementById('stat-tasks').textContent = '?';
+    document.getElementById('stat-high').textContent = '?';
+  }
+}
+
+async function loadMemories() {
+  try {
+    const r = await fetch(JARVIS_URL + '/memories');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    allMemories = data.memories || data || [];
+    renderMemories(allMemories);
+    renderOverviewMemories(allMemories);
+    document.getElementById('stat-memories').textContent = allMemories.length;
+  } catch(e) {
+    console.warn('Memories not loaded:', e.message);
+    document.getElementById('stat-memories').textContent = '?';
+  }
+}
+
+async function loadFileMemories() {
+  try {
+    const r = await fetch(JARVIS_URL + '/file-memories');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    const files = data.files || data || [];
+    renderFileMemories(files);
+    document.getElementById('stat-files').textContent = files.length;
+  } catch(e) {
+    console.warn('File memories not loaded:', e.message);
+    document.getElementById('stat-files').textContent = '?';
+  }
+}
+
+function refreshAll() {
+  loadTasks();
+  loadMemories();
+  loadFileMemories();
+  toast('Data refreshed');
+}
+
+// ---- RENDER TASKS ----
+function renderTasks(tasks) {
+  const el = document.getElementById('task-list');
+  if (!tasks.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">✓</div><div class="empty-text">No tasks yet. Ask JARVIS to add one!</div></div>'; return; }
+  el.innerHTML = tasks.map(t => `
+    <div class="task-item" id="task-${t.id}">
+      <div class="task-check ${t.status === 'done' ? 'done' : ''}" onclick="completeTask(${t.id})"></div>
+      <div class="task-info">
+        <div class="task-title ${t.status === 'done' ? 'done' : ''}">${escHtml(t.title)}</div>
+        <div class="task-meta">
+          <span class="badge badge-${t.priority}">${t.priority}</span>
+          ${t.due_date ? '<span>Due ' + t.due_date + '</span>' : ''}
+          ${t.project ? '<span>' + escHtml(t.project) + '</span>' : ''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderOverviewTasks(tasks) {
+  const el = document.getElementById('overview-tasks');
+  const open = tasks.filter(t => t.status === 'open' || t.status === 'in_progress').slice(0,5);
+  if (!open.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">✓</div><div class="empty-text">All clear, sir</div></div>'; return; }
+  el.innerHTML = open.map(t => `
+    <div class="task-item">
+      <div class="task-check" onclick="completeTask(${t.id})"></div>
+      <div class="task-info">
+        <div class="task-title">${escHtml(t.title)}</div>
+        <div class="task-meta"><span class="badge badge-${t.priority}">${t.priority}</span></div>
+      </div>
+    </div>`).join('');
+}
+
+function filterTasks() {
+  const q = document.getElementById('task-search').value.toLowerCase();
+  const p = document.getElementById('task-filter').value;
+  const filtered = allTasks.filter(t => {
+    const matchQ = !q || t.title.toLowerCase().includes(q) || (t.description||'').toLowerCase().includes(q);
+    const matchP = p === 'all' || t.priority === p;
+    return matchQ && matchP;
+  });
+  renderTasks(filtered);
+}
+
+async function addTask() {
+  const title = document.getElementById('new-task-title').value.trim();
+  const priority = document.getElementById('new-task-priority').value;
+  if (!title) { toast('Enter a task title first'); return; }
+  try {
+    const r = await fetch(JARVIS_URL + '/tasks', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({title, priority, description: ''})
+    });
+    if (r.ok) {
+      document.getElementById('new-task-title').value = '';
+      toast('Task added!');
+      loadTasks();
+    } else {
+      toast('Could not add task — is JARVIS running?');
+    }
+  } catch(e) {
+    toast('Could not connect to JARVIS server');
+  }
+}
+
+async function completeTask(id) {
+  try {
+    await fetch(JARVIS_URL + '/tasks/' + id + '/complete', {method:'POST'});
+    toast('Task completed!');
+    loadTasks();
+  } catch(e) {
+    const el = document.getElementById('task-' + id);
+    if (el) el.querySelector('.task-check').classList.add('done');
+  }
+}
+
+// ---- RENDER MEMORIES ----
+function renderMemories(mems) {
+  const el = document.getElementById('memory-list');
+  if (!mems.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🧠</div><div class="empty-text">No memories yet</div></div>'; return; }
+  el.innerHTML = mems.map(m => {
+    const imp = m.importance || 5;
+    const dots = Array.from({length:10}, (_,i) => `<div class="imp-dot ${i < imp ? 'filled' : ''}"></div>`).join('');
+    return `<div class="memory-item">
+      <div class="memory-type">${m.type || 'fact'}</div>
+      <div class="memory-content">${escHtml(m.content)}</div>
+      <div class="memory-meta">${formatDate(m.created_at)} &middot; accessed ${m.access_count || 0}x</div>
+      <div class="importance-bar">${dots}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderOverviewMemories(mems) {
+  const el = document.getElementById('overview-memories');
+  const top = mems.slice(0,4);
+  if (!top.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🧠</div><div class="empty-text">No memories stored</div></div>'; return; }
+  el.innerHTML = top.map(m => `
+    <div class="memory-item">
+      <div class="memory-type">${m.type || 'fact'}</div>
+      <div class="memory-content">${escHtml(m.content.substring(0, 120))}${m.content.length > 120 ? '...' : ''}</div>
+    </div>`).join('');
+}
+
+function filterMemories() {
+  const q = document.getElementById('memory-search').value.toLowerCase();
+  if (!q) { renderMemories(allMemories); return; }
+  renderMemories(allMemories.filter(m => m.content.toLowerCase().includes(q) || (m.type||'').includes(q)));
+}
+
+// ---- RENDER FILE MEMORIES ----
+function renderFileMemories(files) {
+  const el = document.getElementById('file-list');
+  if (!files.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📁</div><div class="empty-text">No files in memory yet.<br>Tell JARVIS: "Store this file in your memory"</div></div>'; return; }
+  const icons = {'.pdf':'📝','.txt':'📄','.md':'📝','.py':'🐍','.js':'📜','.json':'🧩','.csv':'📊','.docx':'📄','.xlsx':'📊'};
+  el.innerHTML = files.map(f => {
+    const icon = icons[f.file_type] || '📄';
+    const size = f.file_size ? formatBytes(f.file_size) : '';
+    return `<div class="file-item">
+      <div class="file-icon">${icon}</div>
+      <div class="file-info">
+        <div class="file-name">${escHtml(f.filename)}</div>
+        <div class="file-meta">${size} &middot; Stored ${formatDate(f.stored_at)}</div>
+      </div>
+      <button class="file-remove" onclick="removeFile(${f.id})">Remove</button>
+    </div>`;
+  }).join('');
+}
+
+async function removeFile(id) {
+  try {
+    await fetch(JARVIS_URL + '/file-memories/' + id, {method:'DELETE'});
+    toast('File removed from memory');
+    loadFileMemories();
+  } catch(e) {
+    toast('Could not connect to JARVIS');
+  }
+}
+
+// ---- HELPERS ----
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formatDate(ts) {
+  if (!ts) return '';
+  return new Date(ts * 1000).toLocaleDateString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+}
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+
+// Auto-load on start
+setTimeout(refreshAll, 500);
+</script>
+</body>
+</html>
